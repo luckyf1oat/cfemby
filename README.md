@@ -2,7 +2,7 @@
 
 一个部署在 **Cloudflare Workers** 上的轻量 Emby 播放器（原生 HTML/CSS/JS）。
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=<YOUR_GITHUB_REPO_URL>)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/luckyf1oat/cfemby)
 
 > 一键部署前，请先把 `<YOUR_GITHUB_REPO_URL>` 替换成你的公开 GitHub 仓库地址（例如 `https://github.com/yourname/cfemby`）。
 
