@@ -173,7 +173,15 @@ function passThroughHeaders(request) {
 }
 
 function normalizeServer(server) {
-  return String(server).trim().replace(/\/$/, "");
+  const raw = String(server || "").trim();
+  if (!raw) return "";
+  try {
+    const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    const u = new URL(withProtocol);
+    return u.origin;
+  } catch {
+    return raw.replace(/\/$/, "");
+  }
 }
 
 function buildAuthHeader() {
@@ -227,6 +235,16 @@ const STATIC_CONTENT = {
 
   function qs(s) { return document.querySelector(s); }
   function setStatus(t) { dom.status.textContent = t; }
+  function sanitizeServer(input) {
+    const raw = String(input || "").trim();
+    if (!raw) return "";
+    try {
+      const withProtocol = /^https?:\/\//i.test(raw) ? raw : "https://" + raw;
+      return new URL(withProtocol).origin;
+    } catch {
+      return raw.replace(/\/$/, "");
+    }
+  }
   function authHeaders() { return { "x-emby-server": state.server, "x-emby-token": state.token, "x-emby-userid": state.userId }; }
   function authedFetch(url) { return fetch(url, { headers: authHeaders() }); }
   function save() { localStorage.setItem("emby_server", state.server); localStorage.setItem("emby_token", state.token); localStorage.setItem("emby_userId", state.userId); }
@@ -250,14 +268,15 @@ const STATIC_CONTENT = {
     e.preventDefault();
     try {
       setStatus("登录中...");
-      const payload = { server: dom.server.value.trim(), username: dom.username.value.trim(), password: dom.password.value || "" };
+      const payload = { server: sanitizeServer(dom.server.value), username: dom.username.value.trim(), password: dom.password.value || "" };
       if (!payload.server || !payload.username) return setStatus("请填写服务器地址和用户名");
+      dom.server.value = payload.server;
 
       const resp = await fetch("/api/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) return setStatus("登录失败: " + (data.error || resp.status));
 
-      state.server = data.server || payload.server;
+      state.server = sanitizeServer(data.server || payload.server);
       state.token = data.token || "";
       state.userId = data.userId || "";
       if (!state.token || !state.userId) return setStatus("登录失败: Emby 未返回 token/userId");
@@ -378,7 +397,8 @@ const STATIC_CONTENT = {
   }
 
   function init() {
-    dom.server.value = state.server;
+    dom.server.value = sanitizeServer(state.server);
+    state.server = dom.server.value;
     bind();
     if (state.server && state.token && state.userId) { showMain(); loadLibraries(); }
   }
